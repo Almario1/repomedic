@@ -23,7 +23,14 @@ verified fix as a pull request.
 - `repomedic/ingest/github_webhook.py` - check_run / workflow_run parsing
 - `repomedic/deliver/pr.py` - local-file delivery works; GitHub delivery
   stubbed pending credentials
-- `demo/` - offline end-to-end demo (`python3 demo/run_demo.py`)
+- `demo/scenarios/` - four seeded-failure packs (logic bug, import error,
+  lint gate, multi-file bug). Run all:
+  `python3 demo/run_demo.py --all`
+  Controls: `--scenario NAME`, `--max-candidates N`, `--timeout S`,
+  `--stop-on-first-pass`. Each run appends to `demo/output/history.jsonl`
+  and regenerates `demo/output/dashboard.html`.
+- `repomedic/dashboard.py` - static dashboard renderer (skeleton for the
+  hackathon UI)
 - `tests/` - stdlib unittest suite (`python3 -m unittest discover tests`)
 
 ## Constraints

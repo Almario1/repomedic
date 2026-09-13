@@ -1,0 +1,9 @@
+{
+  "event": {
+    "repo_url": "https://example.invalid/demo/multi-file.git",
+    "branch": "main",
+    "commit_sha": "mu17i0",
+    "failing_command": "sh ci.sh"
+  },
+  "expected_winner": "cand-rate-and-base"
+}

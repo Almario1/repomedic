@@ -1,0 +1,9 @@
+{
+  "event": {
+    "repo_url": "https://example.invalid/demo/division-bug.git",
+    "branch": "main",
+    "commit_sha": "d1v1de",
+    "failing_command": "sh ci.sh"
+  },
+  "expected_winner": "cand-true-division"
+}

@@ -1,0 +1,9 @@
+{
+  "event": {
+    "repo_url": "https://example.invalid/demo/import-error.git",
+    "branch": "main",
+    "commit_sha": "1mp0rt",
+    "failing_command": "sh ci.sh"
+  },
+  "expected_winner": "cand-alias"
+}

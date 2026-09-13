@@ -1,0 +1,17 @@
+[
+  {
+    "candidate_id": "cand-whitespace-only",
+    "rationale": "Fixes trailing whitespace but leaves the long line.",
+    "diff": "--- a/src.py\n+++ b/src.py\n@@ -5,3 +5,3 @@\n def banner(message, width):\n-    line = shout(message)  \n+    line = shout(message)\n     return line.center(width)"
+  },
+  {
+    "candidate_id": "cand-long-line-only",
+    "rationale": "Wraps the long signature but leaves trailing whitespace.",
+    "diff": "--- a/src.py\n+++ b/src.py\n@@ -10,2 +10,5 @@\n-def describe(item_count, warehouse_name, region_code, expedited, gift_wrap, insurance_level):\n+def describe(\n+    item_count, warehouse_name, region_code,\n+    expedited, gift_wrap, insurance_level,\n+):\n     flags = []"
+  },
+  {
+    "candidate_id": "cand-full-lint-fix",
+    "rationale": "Correct fix: whitespace, wrapped signature, and wrapped return line.",
+    "diff": "--- a/src.py\n+++ b/src.py\n@@ -5,3 +5,3 @@\n def banner(message, width):\n-    line = shout(message)  \n+    line = shout(message)\n     return line.center(width)\n@@ -10,2 +10,5 @@\n-def describe(item_count, warehouse_name, region_code, expedited, gift_wrap, insurance_level):\n+def describe(\n+    item_count, warehouse_name, region_code,\n+    expedited, gift_wrap, insurance_level,\n+):\n     flags = []\n@@ -16,1 +16,3 @@\n-    return f\"{item_count} items from {warehouse_name}/{region_code} [{flags}] insurance={insurance_level}\"\n+    return (\n+        f\"{item_count} items from {warehouse_name}/{region_code} \"\n+        f\"[{flags}] insurance={insurance_level}\"\n+    )"
+  }
+]

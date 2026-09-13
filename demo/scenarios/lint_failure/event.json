@@ -1,0 +1,9 @@
+{
+  "event": {
+    "repo_url": "https://example.invalid/demo/lint-failure.git",
+    "branch": "main",
+    "commit_sha": "11nt00",
+    "failing_command": "sh ci.sh"
+  },
+  "expected_winner": "cand-full-lint-fix"
+}

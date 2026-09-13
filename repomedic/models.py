@@ -43,6 +43,7 @@ class Diagnosis:
     summary: str
     failing_tests: list[str] = field(default_factory=list)
     suspected_files: list[str] = field(default_factory=list)
+    category: str = "unknown"  # import | assertion | lint | error | unknown
 
 
 @dataclass

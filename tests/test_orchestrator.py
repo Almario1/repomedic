@@ -13,8 +13,8 @@ from repomedic.models import FailureEvent, PatchCandidate
 from repomedic.orchestrator import Orchestrator
 from repomedic.sandbox.local import LocalSandboxProvider
 
-DEMO_REPO = os.path.join(os.path.dirname(__file__), "..", "demo", "demo_repo")
-CANDIDATES = os.path.join(os.path.dirname(__file__), "..", "demo", "candidates.json")
+DEMO_REPO = os.path.join(os.path.dirname(__file__), "..", "demo", "scenarios", "division_bug", "repo")
+CANDIDATES = os.path.join(os.path.dirname(__file__), "..", "demo", "scenarios", "division_bug", "candidates.json")
 
 
 def load_candidates():

@@ -1,0 +1,17 @@
+[
+  {
+    "candidate_id": "cand-wrong-name",
+    "rationale": "Guesses a different missing symbol; import still fails.",
+    "diff": "--- a/greeter.py\n+++ b/greeter.py\n@@ -1,1 +1,1 @@\n-from names import formal_name  # BUG: names.formal was renamed without an alias\n+from names import informal_name"
+  },
+  {
+    "candidate_id": "cand-wrong-behavior",
+    "rationale": "Adds formal_name but with the informal name order; test fails.",
+    "diff": "--- a/names.py\n+++ b/names.py\n@@ -1,2 +1,5 @@\n def formal(first, last):\n     return f\"{last}, {first}\"\n+\n+\n+def formal_name(first, last):\n+    return f\"{first} {last}\""
+  },
+  {
+    "candidate_id": "cand-alias",
+    "rationale": "Correct fix: restore formal_name as an alias of formal.",
+    "diff": "--- a/names.py\n+++ b/names.py\n@@ -1,2 +1,5 @@\n def formal(first, last):\n     return f\"{last}, {first}\"\n+\n+\n+def formal_name(first, last):\n+    return formal(first, last)"
+  }
+]

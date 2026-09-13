@@ -1,0 +1,17 @@
+[
+  {
+    "candidate_id": "cand-rate-only",
+    "rationale": "Fixes the VAT rate but taxes the pre-discount amount.",
+    "diff": "--- a/tax.py\n+++ b/tax.py\n@@ -1,1 +1,1 @@\n-VAT_RATE = 0.15  # BUG: UK standard rate is 0.20\n+VAT_RATE = 0.20"
+  },
+  {
+    "candidate_id": "cand-base-only",
+    "rationale": "Fixes the VAT base but keeps the wrong rate.",
+    "diff": "--- a/cart.py\n+++ b/cart.py\n@@ -8,1 +8,1 @@\n-    return discounted + vat_for(net_amount)  # BUG: VAT on pre-discount amount\n+    return discounted + vat_for(discounted)"
+  },
+  {
+    "candidate_id": "cand-rate-and-base",
+    "rationale": "Correct fix across both files: right rate on the discounted base.",
+    "diff": "--- a/tax.py\n+++ b/tax.py\n@@ -1,1 +1,1 @@\n-VAT_RATE = 0.15  # BUG: UK standard rate is 0.20\n+VAT_RATE = 0.20\n--- a/cart.py\n+++ b/cart.py\n@@ -8,1 +8,1 @@\n-    return discounted + vat_for(net_amount)  # BUG: VAT on pre-discount amount\n+    return discounted + vat_for(discounted)"
+  }
+]

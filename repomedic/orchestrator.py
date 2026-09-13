@@ -29,12 +29,14 @@ class Orchestrator:
         deliverer: PRDeliverer,
         max_candidates: int = 3,
         command_timeout: int = 120,
+        stop_on_first_pass: bool = False,
     ) -> None:
         self.sandbox_provider = sandbox_provider
         self.router = router
         self.deliverer = deliverer
         self.max_candidates = max_candidates
         self.command_timeout = command_timeout
+        self.stop_on_first_pass = stop_on_first_pass
 
     def repair(self, event: FailureEvent, source_dir: str) -> RepairResult:
         """Attempt one end-to-end repair against a local checkout at source_dir."""
@@ -58,7 +60,11 @@ class Orchestrator:
         # 4. Tournament: every candidate gets a FRESH sandbox.
         verifications: list[Verification] = []
         for cand in candidates:
-            verifications.append(self._verify(source_dir, cand, event.failing_command))
+            ver = self._verify(source_dir, cand, event.failing_command)
+            verifications.append(ver)
+            if self.stop_on_first_pass and ver.passed:
+                log.info("stopping tournament early: %s passed", cand.candidate_id)
+                break
 
         passing = [
             (cand, ver)

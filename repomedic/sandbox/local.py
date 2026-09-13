@@ -28,6 +28,33 @@ def _copy_tree(source_dir: str, dest_dir: str) -> None:
             shutil.copy2(os.path.join(root, name), os.path.join(target_root, name))
 
 
+def split_diff_sections(diff_text: str) -> list[tuple[str, str]]:
+    """Split a possibly multi-file unified diff into (target_path, section) pairs."""
+    sections: list[tuple[str, str]] = []
+    current: list[str] = []
+    target = ""
+    for raw in diff_text.splitlines():
+        if raw.startswith("--- "):
+            if current:
+                if not target:
+                    raise PatchApplyError("Diff section has no +++ target header")
+                sections.append((target, "\n".join(current)))
+            current = [raw]
+            target = ""
+            continue
+        if raw.startswith("+++ ") and current and not target:
+            target = raw[4:].removeprefix("b/")
+        if current:
+            current.append(raw)
+    if current:
+        if not target:
+            raise PatchApplyError("Diff section has no +++ target header")
+        sections.append((target, "\n".join(current)))
+    if not sections:
+        raise PatchApplyError("No file sections found in diff")
+    return sections
+
+
 def apply_unified_diff(original: str, diff_text: str) -> str:
     """Apply a small unified diff to file text.
 
@@ -107,15 +134,15 @@ class LocalSandboxSession(SandboxSession):
         )
 
     def apply_patch(self, diff_text: str) -> None:
-        target = self._target_file(diff_text)
-        path = os.path.join(self.workdir, target)
-        if not os.path.isfile(path):
-            raise PatchApplyError(f"Patch target not found: {target}")
-        with open(path, encoding="utf-8") as fh:
-            original = fh.read()
-        patched = apply_unified_diff(original, diff_text)
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write(patched)
+        for target, section in split_diff_sections(diff_text):
+            path = os.path.join(self.workdir, target)
+            if not os.path.isfile(path):
+                raise PatchApplyError(f"Patch target not found: {target}")
+            with open(path, encoding="utf-8") as fh:
+                original = fh.read()
+            patched = apply_unified_diff(original, section)
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(patched)
 
     def read_file(self, relpath: str) -> str:
         with open(os.path.join(self.workdir, relpath), encoding="utf-8") as fh:
@@ -123,16 +150,6 @@ class LocalSandboxSession(SandboxSession):
 
     def cleanup(self) -> None:
         shutil.rmtree(self.workdir, ignore_errors=True)
-
-    @staticmethod
-    def _target_file(diff_text: str) -> str:
-        for raw in diff_text.splitlines():
-            if raw.startswith("+++ b/"):
-                return raw[len("+++ b/"):]
-            if raw.startswith("+++ "):
-                return raw[len("+++ "):]
-        raise PatchApplyError("Diff has no +++ target header")
-
 
 class LocalSandboxProvider(SandboxProvider):
     def open_session(self, source_dir: str) -> LocalSandboxSession:
