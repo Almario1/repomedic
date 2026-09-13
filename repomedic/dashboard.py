@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import html
 import json
-from typing import Any
+from typing import Any, Optional
 
 
 def load_history(path: str) -> list[dict[str, Any]]:
@@ -34,8 +34,31 @@ def _status_badge(status: str) -> str:
     return f'<span style="background:{color};color:#fff;padding:2px 8px;border-radius:10px">{_esc(status)}</span>'
 
 
-def render_dashboard(reports: list[dict[str, Any]]) -> str:
+def _live_section(live: dict[str, Any]) -> str:
+    badge = ('<span style="background:#0969da;color:#fff;padding:2px 8px;'
+             'border-radius:10px">IN PROGRESS</span>')
+    events = "".join(
+        f"<li>{_esc(ev.get('ts', ''))} - {_esc(ev.get('stage', ''))}"
+        + (
+            f" ({_esc(ev.get('candidate_id'))}: {'PASS' if ev.get('passed') else 'FAIL'})"
+            if ev.get("stage") == "candidate_verified"
+            else ""
+        )
+        + "</li>"
+        for ev in live.get("events", [])
+    )
+    return (
+        f"<section><h2>{_esc(live.get('scenario', 'run'))} {badge}</h2>"
+        f"<ul>{events}</ul></section>"
+    )
+
+
+def render_dashboard(
+    reports: list[dict[str, Any]], live: Optional[list[dict[str, Any]]] = None
+) -> str:
     rows = []
+    for entry in live or []:
+        rows.append(_live_section(entry))
     for rep in reversed(reports):
         verifications = "".join(
             f"<tr><td>{_esc(v['candidate_id'])}</td>"

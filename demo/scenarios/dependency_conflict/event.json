@@ -1,0 +1,9 @@
+{
+  "event": {
+    "repo_url": "https://example.invalid/demo/dependency-conflict.git",
+    "branch": "main",
+    "commit_sha": "dep000",
+    "failing_command": "sh ci.sh"
+  },
+  "expected_winner": "cand-vendor-upgrade"
+}

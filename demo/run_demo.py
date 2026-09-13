@@ -26,6 +26,7 @@ from repomedic.deliver.pr import LocalFilePRDeliverer, result_to_json
 from repomedic.llm.mock import MockRouter
 from repomedic.models import FailureEvent, PatchCandidate
 from repomedic.orchestrator import Orchestrator
+from repomedic.progress import ProgressReporter
 from repomedic.sandbox.local import LocalSandboxProvider
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +34,22 @@ SCENARIOS_DIR = os.path.join(HERE, "scenarios")
 OUT_DIR = os.path.join(HERE, "output")
 HISTORY_PATH = os.path.join(OUT_DIR, "history.jsonl")
 DASHBOARD_PATH = os.path.join(OUT_DIR, "dashboard.html")
+LIVE_DIR = os.path.join(OUT_DIR, "live")
+
+
+def refresh_dashboard() -> None:
+    live = []
+    if os.path.isdir(LIVE_DIR):
+        for name in sorted(os.listdir(LIVE_DIR)):
+            if name.endswith(".json"):
+                live.append(
+                    {
+                        "scenario": name[: -len(".json")],
+                        "events": ProgressReporter.load(os.path.join(LIVE_DIR, name)),
+                    }
+                )
+    with open(DASHBOARD_PATH, "w", encoding="utf-8") as fh:
+        fh.write(render_dashboard(load_history(HISTORY_PATH), live=live))
 
 
 def list_scenarios() -> list[str]:
@@ -52,6 +69,10 @@ def run_scenario(name: str, args: argparse.Namespace) -> dict:
 
     event = FailureEvent(**meta["event"])
     run_out = os.path.join(OUT_DIR, name)
+    reporter = ProgressReporter(
+        os.path.join(LIVE_DIR, f"{name}.json"), on_update=refresh_dashboard
+    )
+    reporter("started", scenario=name)
     orchestrator = Orchestrator(
         sandbox_provider=LocalSandboxProvider(),
         router=MockRouter(scripted_candidates=candidates),
@@ -59,8 +80,12 @@ def run_scenario(name: str, args: argparse.Namespace) -> dict:
         max_candidates=args.max_candidates,
         command_timeout=args.timeout,
         stop_on_first_pass=args.stop_on_first_pass,
+        parallel=not args.no_parallel,
+        reporter=reporter,
     )
     result = orchestrator.repair(event, os.path.join(scenario_dir, "repo"))
+    reporter("finished", status=result.status)
+    os.remove(os.path.join(LIVE_DIR, f"{name}.json"))
 
     print(f"== {name}: {result.status}")
     for ver in result.verifications:
@@ -99,14 +124,15 @@ def main() -> int:
     parser.add_argument("--max-candidates", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=120)
     parser.add_argument("--stop-on-first-pass", action="store_true")
+    parser.add_argument("--no-parallel", action="store_true",
+                        help="verify candidates sequentially instead of in parallel")
     args = parser.parse_args()
 
     os.makedirs(OUT_DIR, exist_ok=True)
     names = list_scenarios() if args.all else [args.scenario]
     records = [run_scenario(name, args) for name in names]
 
-    with open(DASHBOARD_PATH, "w", encoding="utf-8") as fh:
-        fh.write(render_dashboard(load_history(HISTORY_PATH)))
+    refresh_dashboard()
     print(f"Dashboard: {DASHBOARD_PATH}")
 
     return 0 if all(r["status"] == "REPAIRED" for r in records) else 1
