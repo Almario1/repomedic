@@ -1,14 +1,12 @@
-"""Nemotron router via Nebius Token Factory - UNVERIFIED ENDPOINT.
+"""Nemotron router via Nebius Token Factory.
 
-Token Factory exposes an OpenAI-compatible chat-completions API, so this
-client uses plain HTTP with an Authorization: Bearer key. Model IDs and
-the base URL below are PLACEHOLDERS: confirm the exact Nemotron model
-identifiers (Nano / Super / Ultra naming) from the Token Factory model
-list once Mario's Nebius account exists.
-
+Verified against Token Factory docs/model catalog on 2026-09-13:
+- base URL https://api.tokenfactory.nebius.com/v1 (OpenAI-compatible)
+- model IDs from https://tokenfactory.nebius.com/model-catalog.md
+- machine-readable catalog: /api/public/models_info
 Routing policy (cost-aware, mirrors the track guidance):
-  triage            -> small/fast model (cheap dedup + classification)
-  generate_candidates -> reasoning model for the patch itself
+  triage              -> Nemotron-3-Nano (cheap classification)
+  generate_candidates -> Nemotron-3-Ultra (deep patch reasoning)
 The candidate tournament that verifies each patch needs no model calls.
 """
 
@@ -22,11 +20,12 @@ from typing import Any, Callable, Optional
 from ..models import Diagnosis, FailureEvent, PatchCandidate
 from .base import LLMRouter
 
-DEFAULT_BASE_URL = "https://api.tokenfactory.nebius.com/v1"  # PLACEHOLDER - verify
+DEFAULT_BASE_URL = "https://api.tokenfactory.nebius.com/v1"
 
-# PLACEHOLDER model IDs - verify against the live Token Factory model list.
-MODEL_TRIAGE = "nvidia/nemotron-nano"
-MODEL_REASONING = "nvidia/nemotron-ultra"
+# Live model IDs (model catalog, 2026-09-13).
+MODEL_TRIAGE = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
+MODEL_REASONING = "nvidia/Nemotron-3-Ultra-550b-a55b"
+MODEL_MID = "nvidia/nemotron-3-super-120b-a12b"  # reserved for test generation
 
 _PATCH_INSTRUCTION = (
     "You are repairing a failing CI run. Reply with a unified diff only, "
