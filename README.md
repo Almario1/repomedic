@@ -1,44 +1,75 @@
-# RepoMedic (private scaffold)
+# RepoMedic
 
-Autonomous CI-repair agent being built for the Nebius x NVIDIA Global AI
-Hackathon (Coding and Agentic Engineering Track). This is the private
-development scaffold; the public competition repo, README, and license
-top-matter come later, once the owner's GitHub account exists.
+An autonomous CI-repair agent. When a repository's CI fails, RepoMedic
+reproduces the failure inside an isolated Nebius Token Factory Sandbox,
+diagnoses the root cause with NVIDIA Nemotron models, generates several
+candidate patches, runs the full test command against EACH candidate in
+its OWN branched sandbox state, and opens a pull request only for a fix
+that is verified green. Bad patches never reach a reviewer.
 
-## What it does
+Built for the Nebius x NVIDIA Global AI Hackathon (Coding and Agentic
+Engineering Track).
 
-Watch repo -> CI fails -> reproduce the failure in an isolated sandbox
--> diagnose -> generate candidate patches -> run the full test command
-against EACH candidate in its OWN fresh sandbox -> deliver only a
-verified fix as a pull request.
+## Why it is not "just AI writes code"
 
-## Layout
+- Every repair claim is proven by execution: candidates are tournamented
+  in parallel, each in its own sandbox branch forked from the same
+  seeded repo state (Token Factory Sandboxes' Git-like branching).
+- Cost-aware model routing on Token Factory: Nemotron-3-Nano triages the
+  failure log, Nemotron-3-Ultra reasons about the patch.
+- The dashboard shows live sandbox runs, per-candidate verdicts and the
+  winning diff - a complete product, not a proof of concept.
 
-- `repomedic/orchestrator.py` - the repair loop (provider/router/deliverer injected)
-- `repomedic/sandbox/base.py` - sandbox seam; `local.py` works today,
-  `token_factory.py` is the marked seam for the unverified Sandboxes API
-- `repomedic/llm/` - `mock.py` (deterministic, tests/demo) and
-  `nemotron.py` (Token Factory OpenAI-compatible client, model IDs are
-  placeholders pending the live model list)
-- `repomedic/ingest/github_webhook.py` - check_run / workflow_run parsing
-- `repomedic/deliver/pr.py` - local-file delivery works; GitHub delivery
-  stubbed pending credentials
-- `demo/scenarios/` - five seeded-failure packs (logic bug, import error,
-  lint gate, multi-file bug, dependency/version conflict). Run all:
-  `python3 demo/run_demo.py --all`
-  Controls: `--scenario NAME`, `--max-candidates N`, `--timeout S`,
-  `--stop-on-first-pass`, `--no-parallel`. Candidates are verified in
-  parallel by default (each in its own fresh sandbox). Live progress is
-  streamed to `demo/output/live/` and re-rendered into
-  `demo/output/dashboard.html` on every stage event; completed runs
-  append to `demo/output/history.jsonl`.
-- `repomedic/dashboard.py` - static dashboard renderer (skeleton for the
-  hackathon UI)
-- `tests/` - stdlib unittest suite (`python3 -m unittest discover tests`)
+## Architecture
 
-## Constraints
+```
+GitHub webhook (check_run / workflow_run failure)
+  -> ingest (repomedic/ingest)
+  -> reproduce in a fresh sandbox (repomedic/sandbox/token_factory)
+  -> triage (repomedic/llm/nemotron, Nano)
+  -> candidate patches (Nemotron Ultra)
+  -> parallel tournament, one sandbox branch per candidate
+  -> verified winner -> pull request (repomedic/deliver)
+  -> live dashboard (repomedic/dashboard)
+```
 
-Python 3.10+, stdlib only (no pip installs needed). The real deployment
-targets Token Factory Sandboxes + Nemotron models + Nebius Serverless;
-each external dependency sits behind an interface so the unverified
-pieces can be filled in without touching the loop.
+## Repository layout
+
+- `repomedic/orchestrator.py` - the repair loop (providers injected)
+- `repomedic/sandbox/` - sandbox seam: Token Factory Sandboxes provider
+  (production) + local provider (development/tests)
+- `repomedic/llm/` - model seam: Nemotron router + deterministic mock
+- `repomedic/ingest/` - GitHub webhook parsing
+- `repomedic/deliver/` - pull-request delivery
+- `demo/` - five seeded-failure scenario packs + offline end-to-end demo
+- `tests/` - unittest suite (38 tests)
+
+## Try the offline demo
+
+No accounts or dependencies needed (Python 3.10+, stdlib only):
+
+```sh
+python3 demo/run_demo.py --all
+```
+
+Five seeded failure scenarios (logic bug, import error, lint gate,
+multi-file bug, dependency conflict) are repaired end-to-end by the real
+loop with a mocked model; PR artifacts, reports and a live dashboard
+land in `demo/output/`.
+
+## Production setup
+
+Requires `pip install contree-sdk`, `NEBIUS_API_KEY`, and
+`NEBIUS_PROJECT_ID` from Nebius Token Factory. See
+`repomedic/sandbox/token_factory.py` for the exact API mapping.
+
+## AI-assistance disclosure
+
+RepoMedic's codebase was prepared by an AI coding assistant (Instinct)
+working with the repository owner's authorization and review. Fittingly,
+it is also a tool whose entire purpose is that AI-generated patches must
+prove themselves by execution before a human ever sees them.
+
+## License
+
+MIT (see LICENSE).
