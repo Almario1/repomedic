@@ -1,0 +1,17 @@
+[
+  {
+    "candidate_id": "cand-subtract",
+    "rationale": "Misreads the operator bug and swaps in subtraction.",
+    "diff": "--- a/calc.py\n+++ b/calc.py\n@@ -14,4 +14,4 @@\n \n def divide(a, b):\n-    return a * b  # BUG: should be a / b\n+    return a - b"
+  },
+  {
+    "candidate_id": "cand-floor-division",
+    "rationale": "Uses floor division - passes integer cases, fails float cases.",
+    "diff": "--- a/calc.py\n+++ b/calc.py\n@@ -14,4 +14,4 @@\n \n def divide(a, b):\n-    return a * b  # BUG: should be a / b\n+    return a // b"
+  },
+  {
+    "candidate_id": "cand-true-division",
+    "rationale": "Correct fix: true division.",
+    "diff": "--- a/calc.py\n+++ b/calc.py\n@@ -14,4 +14,4 @@\n \n def divide(a, b):\n-    return a * b  # BUG: should be a / b\n+    return a / b"
+  }
+]
